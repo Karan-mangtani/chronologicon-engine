@@ -12,7 +12,7 @@ const db = require('./src/utils/db');
 const eventRoutes = require('./src/api/routes/eventRoutes');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const APP_PORT = process.env.APP_PORT || 3000;
 
 
 // Enable CORS for all routes
@@ -211,8 +211,8 @@ const startServer = async () => {
     console.log('Database connection verified');
     
     // Start the HTTP server
-    const server = app.listen(PORT, () => {
-      console.log(`Chronologicon Engine server is running on port ${PORT}`);
+    const server = app.listen(APP_PORT, () => {
+      console.log(`Chronologicon Engine server is running on port ${APP_PORT}`);
     });
     
     // Graceful shutdown handlers
