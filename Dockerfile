@@ -12,7 +12,7 @@ RUN addgroup -g 1001 -S nodejs && \
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production && \
+RUN npm i && \
     npm cache clean --force
 
 # Copy the rest of the application code
