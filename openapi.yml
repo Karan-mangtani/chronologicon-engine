@@ -1,0 +1,560 @@
+openapi: 3.0.0
+info:
+  title: Chronologicon Engine API
+  description: A production-ready API for managing historical events with asynchronous file ingestion
+  version: 1.0.0
+  contact:
+    name: Chronologicon Engine Team
+servers:
+  - url: http://localhost:3000
+    description: Development server
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+paths:
+  /api/events/ingest:
+    post:
+      summary: Ingest historical data from a file
+      description: Submit a file for asynchronous processing. Returns immediately with a job ID.
+      operationId: ingestFile
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Historical events data file (JSON Lines, CSV, or JSON format)
+                description:
+                  type: string
+                  description: Optional description for this ingestion job
+                  example: "Q4 2023 historical events data"
+      responses:
+        '202':
+          description: File ingestion job accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobId:
+                    type: string
+                    format: uuid
+                    description: Unique identifier for the ingestion job
+                  message:
+                    type: string
+                    example: "Ingestion job created successfully"
+        '400':
+          description: Bad request - invalid file or missing parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - Invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/events/ingestion-status/{jobId}:
+    get:
+      summary: Get the status of an ingestion job
+      description: Retrieve the current status and progress of a file ingestion job
+      operationId: getIngestionStatus
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The unique identifier of the ingestion job
+      responses:
+        '200':
+          description: Job status retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobId:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    enum: [PENDING, PROCESSING, COMPLETED, FAILED]
+                  sourceLocation:
+                    type: string
+                  totalLines:
+                    type: integer
+                    nullable: true
+                  processedLines:
+                    type: integer
+                  errorLines:
+                    type: integer
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  startTime:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  endTime:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  createdAt:
+                    type: string
+                    format: date-time
+        '404':
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - Invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/timeline/{rootEventId}:
+    get:
+      summary: Get a full hierarchical timeline for an event
+      description: Retrieve a nested structure showing an event and all its child events
+      operationId: getTimeline
+      parameters:
+        - name: rootEventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The unique identifier of the root event
+      responses:
+        '200':
+          description: Timeline retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimelineEvent'
+        '404':
+          description: Event not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - Invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/events/search:
+    get:
+      summary: Search for events with filters
+      description: Search and filter historical events with various criteria
+      operationId: searchEvents
+      parameters:
+        - name: name
+          in: query
+          schema:
+            type: string
+          description: Filter by event name (partial match)
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Filter events that start after this date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Filter events that end before this date
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [start_date, end_date, event_name, duration_minutes]
+            default: start_date
+          description: Field to sort results by
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+          description: Sort order
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of results per page
+      responses:
+        '200':
+          description: Events retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Event'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '400':
+          description: Bad request - invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - Invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/insights/overlapping-events:
+    get:
+      summary: Find events that overlap in time
+      description: Retrieve events that have overlapping time periods within a date range
+      operationId: getOverlappingEvents
+      parameters:
+        - name: startDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+          description: Start of the date range to search for overlaps
+        - name: endDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+          description: End of the date range to search for overlaps
+      responses:
+        '200':
+          description: Overlapping events found successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  overlappingGroups:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        events:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/Event'
+                        overlapStart:
+                          type: string
+                          format: date-time
+                        overlapEnd:
+                          type: string
+                          format: date-time
+        '400':
+          description: Bad request - invalid date range
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - Invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/insights/temporal-gaps:
+    get:
+      summary: Find the largest gap between events
+      description: Identify the largest time gap between consecutive events in a date range
+      operationId: getTemporalGaps
+      parameters:
+        - name: startDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+          description: Start of the date range to analyze
+        - name: endDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+          description: End of the date range to analyze
+      responses:
+        '200':
+          description: Temporal gaps found successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  largestGap:
+                    type: object
+                    properties:
+                      gapStart:
+                        type: string
+                        format: date-time
+                      gapEnd:
+                        type: string
+                        format: date-time
+                      gapDurationMinutes:
+                        type: integer
+                      precedingEvent:
+                        $ref: '#/components/schemas/Event'
+                      followingEvent:
+                        $ref: '#/components/schemas/Event'
+                  allGaps:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        gapStart:
+                          type: string
+                          format: date-time
+                        gapEnd:
+                          type: string
+                          format: date-time
+                        gapDurationMinutes:
+                          type: integer
+                        precedingEvent:
+                          $ref: '#/components/schemas/Event'
+                        followingEvent:
+                          $ref: '#/components/schemas/Event'
+        '400':
+          description: Bad request - invalid date range
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - Invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/insights/event-influence:
+    get:
+      summary: Find the shortest influence path between two events
+      description: Calculate the shortest path showing how one event might influence another through the hierarchy
+      operationId: getEventInfluence
+      parameters:
+        - name: sourceEventId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The source event ID
+        - name: targetEventId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The target event ID
+      responses:
+        '200':
+          description: Influence path found successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  path:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Event'
+                  pathLength:
+                    type: integer
+                  hasDirectInfluence:
+                    type: boolean
+        '404':
+          description: No influence path found between the events
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400':
+          description: Bad request - invalid event IDs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - Invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: API key for authentication
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: Bearer token authentication
+  
+  schemas:
+    Event:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        eventName:
+          type: string
+        description:
+          type: string
+          nullable: true
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        durationMinutes:
+          type: integer
+        parentEventId:
+          type: string
+          format: uuid
+          nullable: true
+        metadata:
+          type: object
+          nullable: true
+      required:
+        - eventId
+        - eventName
+        - startDate
+        - endDate
+        - durationMinutes
+
+    TimelineEvent:
+      allOf:
+        - $ref: '#/components/schemas/Event'
+        - type: object
+          properties:
+            children:
+              type: array
+              items:
+                $ref: '#/components/schemas/TimelineEvent'
+
+    Pagination:
+      type: object
+      properties:
+        currentPage:
+          type: integer
+        totalPages:
+          type: integer
+        totalItems:
+          type: integer
+        itemsPerPage:
+          type: integer
+        hasNextPage:
+          type: boolean
+        hasPreviousPage:
+          type: boolean
+      required:
+        - currentPage
+        - totalPages
+        - totalItems
+        - itemsPerPage
+        - hasNextPage
+        - hasPreviousPage
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          nullable: true
+      required:
+        - error
+        - message

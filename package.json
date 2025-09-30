@@ -1,0 +1,42 @@
+{
+  "name": "chronologicon-engine",
+  "version": "1.0.0",
+  "description": "A production-ready Node.js Express application for managing historical events with asynchronous file ingestion",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "worker": "node worker.js",
+    "start:both": "node start.js",
+    "start:parallel": "npm run start & npm run worker",
+    "start:concurrent": "concurrently \"npm run start\" \"npm run worker\" --names \"SERVER,WORKER\" --prefix-colors \"blue,green\"",
+    "dev": "nodemon server.js",
+    "dev:worker": "nodemon worker.js",
+    "dev:both": "npm run dev & npm run dev:worker",
+    "dev:concurrent": "concurrently \"npm run dev\" \"npm run dev:worker\" --names \"SERVER,WORKER\" --prefix-colors \"blue,green\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "express",
+    "postgresql",
+    "api",
+    "historical-events",
+    "chronology"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.1.4",
+    "express": "^4.18.2",
+    "express-openapi-validator": "^5.0.4",
+    "js-yaml": "^4.1.0",
+    "multer": "^2.0.2",
+    "pg": "^8.11.0",
+    "swagger-ui-express": "^5.0.1",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "nodemon": "^2.0.22"
+  }
+}
