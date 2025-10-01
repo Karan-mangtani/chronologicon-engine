@@ -153,8 +153,6 @@ The API uses API key authentication for all endpoints except `/health`, `/api-do
 | `DB_NAME` | chronologicon | Database name |
 | `DB_USER` | postgres | Database user |
 | `DB_PASSWORD` | password | Database password |
-| `WORKER_POLLING_INTERVAL` | 5000 | Worker polling interval (ms) |
 | `NODE_ENV` | development | Environment mode |
-| `ALLOWED_ORIGINS` | http://localhost:3000 | CORS allowed origins |
 | `API_KEY` | - | Required API key for authentication | 
 
