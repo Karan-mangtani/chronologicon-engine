@@ -1,15 +1,5 @@
 # Chronologicon Engine
 
-A production-ready Node.js Express application for managing historical events with asynchronous file ingestion capabilities. The application provides a RESTful API for storing, querying, and analyzing historical events with support for hierarchical relationships and temporal insights.
-
-## Features
-
-- **Asynchronous File Ingestion**: Process large historical event files in the background
-- **Hierarchical Event Structure**: Support for parent-child relationships between events
-- **Temporal Analysis**: Find overlapping events, temporal gaps, and influence paths
-- **Advanced Search**: Search and filter events with pagination and sorting
-- **OpenAPI Integration**: Automatic request validation using OpenAPI 3.0 specification
-- **Production Ready**: Includes error handling, logging, graceful shutdown, and connection pooling
 
 ## Architecture
 
@@ -92,21 +82,14 @@ chronologicon-engine/
 4. **Start the application**:
    ```bash
    # Terminal 1: Start the API server
-   npm start
-   
-   # Terminal 2: Start the worker process
-   npm run worker
+   npm run start:both
    ```
 
 ### Development Mode
 
 ```bash
 # Terminal 1: API server with auto-reload
-npm run dev
-
-# Terminal 2: Worker process with auto-reload
-npm run dev:worker
-```
+npm run start:both
 
 ## Docker Deployment
 
@@ -181,118 +164,12 @@ The API uses API key authentication for all endpoints except `/health`, `/api-do
         http://localhost:3000/api/events/search
    ```
 
-### Protected Endpoints
-
-All `/api/*` endpoints require authentication except:
-- `/health` - Health check endpoint
-- `/api-docs` - API documentation 
-- `/api/openapi.json` - OpenAPI specification
-
-Requests without a valid API key will receive a `401 Unauthorized` response.
-
-## API Endpoints
-
-### File Ingestion
-
-- **POST** `/api/events/ingest` - Submit a file for processing
-- **GET** `/api/events/ingestion-status/{jobId}` - Get job status
-
-### Event Queries
-
-- **GET** `/api/timeline/{rootEventId}` - Get hierarchical timeline
-- **GET** `/api/events/search` - Search events with filters
-
-### Insights
-
-- **GET** `/api/insights/overlapping-events` - Find overlapping events
-- **GET** `/api/insights/temporal-gaps` - Find temporal gaps
-- **GET** `/api/insights/event-influence` - Find influence paths
-
-## Usage Examples
-
-### 1. Ingest Historical Events
-
-```bash
-curl -X POST http://localhost:3000/api/events/ingest \
-  -H "Content-Type: application/json" \
-  -d '{"filePath": "/path/to/sample-data/historical_events.jsonl"}'
-```
-
-Response:
-```json
-{
-  "jobId": "123e4567-e89b-12d3-a456-426614174000",
-  "message": "Ingestion job created successfully"
-}
-```
-
-### 2. Check Job Status
-
-```bash
-curl http://localhost:3000/api/events/ingestion-status/123e4567-e89b-12d3-a456-426614174000
-```
-
-### 3. Search Events
-
-```bash
-curl "http://localhost:3000/api/events/search?name=war&sortBy=start_date&page=1&limit=10"
-```
-
-### 4. Find Overlapping Events
-
-```bash
-curl "http://localhost:3000/api/insights/overlapping-events?startDate=1940-01-01T00:00:00Z&endDate=1950-12-31T23:59:59Z"
-```
-
-## Data Format
-
-The application accepts historical events in JSON Lines format. Each line should be a JSON object with the following structure:
-
-```json
-{
-  "eventName": "World War II",
-  "description": "Global war involving most of the world's nations",
-  "startDate": "1939-09-01T00:00:00Z",
-  "endDate": "1945-09-02T23:59:59Z",
-  "parentEventId": null,
-  "metadata": {
-    "type": "global_conflict",
-    "continents": ["Europe", "Asia", "Africa"]
-  }
-}
-```
-
-### Required Fields
-
-- `eventName`: String - Name of the event
-- `startDate`: ISO 8601 timestamp - When the event started
-- `endDate`: ISO 8601 timestamp - When the event ended
-
-### Optional Fields
-
-- `description`: String - Detailed description
-- `parentEventId`: UUID - ID of parent event for hierarchy
-- `metadata`: Object - Additional structured data
-
-## Database Schema
-
-The application uses two main tables:
-
-### `historical_events`
-- Stores event data with hierarchical relationships
-- Includes temporal constraints and indexes for performance
-
-### `ingestion_jobs`
-- Tracks background file processing jobs
-- Includes progress tracking and error logging
-
-See `setup.sql` for the complete schema definition.
 
 ### Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PORT` | 3000 | Server port |
+| `APP_PORT` | 3000 | Server port |
 | `DB_HOST` | localhost | PostgreSQL host |
 | `DB_PORT` | 5432 | PostgreSQL port |
 | `DB_NAME` | chronologicon | Database name |
