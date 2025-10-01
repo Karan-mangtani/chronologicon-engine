@@ -6,9 +6,7 @@ DROP TABLE IF EXISTS ingestion_jobs;
 DROP TABLE IF EXISTS historical_events;
 DROP TYPE IF EXISTS JOB_STATUS;
 
--- =============================================
--- Custom Types
--- =============================================
+
 -- Create a custom ENUM type for job status to ensure data integrity.
 -- This restricts the 'status' column to only these specific values.
 CREATE TYPE JOB_STATUS AS ENUM (
@@ -18,9 +16,7 @@ CREATE TYPE JOB_STATUS AS ENUM (
     'FAILED'
 );
 
--- =============================================
--- Table for Storing Historical Events
--- =============================================
+
 CREATE TABLE historical_events (
     -- The primary identifier for the event. Using UUID is a good practice for distributed data.
     event_id UUID PRIMARY KEY,
@@ -38,22 +34,14 @@ CREATE TABLE historical_events (
     -- Calculated field for quick access to the event's duration in minutes.
     duration_minutes INTEGER NOT NULL,
 
-    -- Self-referencing foreign key to establish a parent-child hierarchy.
-    -- ON DELETE SET NULL: If a parent event is deleted, its children are not deleted,
-    -- but their parent_event_id is set to NULL, making them root-level events.
     parent_event_id UUID ,
 
-    -- A flexible JSONB field for storing unstructured metadata.
-    -- JSONB is the binary format, which is more efficient for querying than plain JSON.
     metadata JSONB,
 
-    -- Constraint to ensure logical consistency of dates.
     CONSTRAINT check_end_date_after_start_date CHECK (end_date >= start_date)
 );
 
--- =============================================
--- Table for Tracking Asynchronous Ingestion Jobs
--- =============================================
+
 CREATE TABLE ingestion_jobs (
     -- The primary key for the job.
     job_id UUID PRIMARY KEY,
@@ -81,9 +69,6 @@ CREATE TABLE ingestion_jobs (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- =============================================
--- Indexes for Performance Optimization
--- =============================================
 
 -- Indexes on date columns to speed up time-based queries (e.g., search, temporal gaps).
 CREATE INDEX idx_events_start_date ON historical_events(start_date);
