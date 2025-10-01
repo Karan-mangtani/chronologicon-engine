@@ -91,28 +91,6 @@ chronologicon-engine/
 # Terminal 1: API server with auto-reload
 npm run start:both
 
-## Docker Deployment
-
-### Quick Start with Docker Compose
-
-The easiest way to run the application is using Docker Compose, which sets up both the application and PostgreSQL database:
-
-```bash
-# Clone the repository
-git clone <repository-url>
-cd chronologicon-engine
-
-# Start the application and database
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop the application
-docker-compose down
-```
-
-The application will be available at `http://localhost:3000` with the API documentation at `http://localhost:3000/api-docs`.
 
 ### Building and Running with Docker
 
