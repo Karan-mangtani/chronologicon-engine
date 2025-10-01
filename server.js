@@ -15,12 +15,6 @@ const app = express();
 const APP_PORT = process.env.APP_PORT || 3000;
 
 
-// Enable CORS for all routes
-app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*',
-  credentials: true
-}));
-
 // Parse JSON bodies
 app.use(express.json({ limit: '10mb' }));
 
